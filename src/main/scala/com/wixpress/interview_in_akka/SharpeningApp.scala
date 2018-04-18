@@ -1,8 +1,7 @@
 package com.wixpress.interview_in_akka
 
-import akka.stream.scaladsl.{Flow, Sink, Source}
+import akka.stream.scaladsl._
 
-import scala.collection.immutable.Seq
 import scala.concurrent.{Future, blocking}
 
 trait Processor {
@@ -17,24 +16,33 @@ trait Processor {
 
 object SharpeningApp {
 
-  val files = Seq("1.jpg", "2.jpg", "3.jpg")
   val processor: Processor = ???
 
+  def loadIndex(): Iterator[String] = scala.io.Source.fromFile("a.csv").getLines
+
   // Basic example
-  Source(files)
-    .map(filename ⇒ filename → processor.load(filename))
-    .map { case (filename, image) ⇒ filename → processor.process(image) }
+  Source.fromIterator(loadIndex)
+    .map {
+      filename => filename → processor.load(filename)
+    }
+    .map { case (filename, image) ⇒
+      filename → processor.process(image)
+    }
     .runForeach((processor.save _).tupled)
 
+
   // Add parallelism
-  Source(files)
-    .map (filename ⇒ filename → processor.load(filename))
+  Source.fromIterator(loadIndex)
+    .map { filename =>
+      filename → processor.load(filename)
+    }
     .mapAsyncUnordered(4) { case (filename, image) ⇒
       Future(blocking {
         filename → processor.process(image)
       })
     }
     .runForeach((processor.save _).tupled)
+
 
   // Extract definitions
   def items[A](iterator: Iterator[A]) = Source.fromIterator(() ⇒ iterator)
@@ -45,9 +53,12 @@ object SharpeningApp {
 
   def save = Sink.foreach((processor.save _).tupled)
 
-  items(files.iterator)
+  items(loadIndex())
     .via(load)
     .via(process)
     .runWith(save)
+
+  // Use GraphBuilder API
+
 
 }
