@@ -21,3 +21,4 @@ object FibonacciApp extends App {
 
 // - how to run a stream
 // - show that stream runs in different process
+// - implement db fetch with unfold

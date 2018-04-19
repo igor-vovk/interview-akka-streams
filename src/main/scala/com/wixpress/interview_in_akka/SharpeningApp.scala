@@ -47,18 +47,25 @@ object SharpeningApp {
   // Extract definitions
   def items[A](iterator: Iterator[A]) = Source.fromIterator(() ⇒ iterator)
 
-  def load = Flow[String].map(processor.load)
+  def loadItem = Flow[String].map(processor.load)
 
   def process = Flow[Array[Byte]].map(processor.process)
 
-  def save = Sink.foreach((processor.save _).tupled)
+  def saveItem = Sink.foreach((processor.save _).tupled)
 
   items(loadIndex())
-    .via(load)
+    .via(loadItem)
     .via(process)
-    .runWith(save)
+    .runWith(saveItem)
+
+  // Show differences in composition between function calls, monads and Streams
+
+
+
 
   // Use GraphBuilder API
+
+
 
 
 }
